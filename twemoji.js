@@ -356,7 +356,7 @@ console.log(text.charCodeAt(1).toString(16));
         i = index + alt.length;
         
             img = renderChar(cpme(alt));
-            img.className = options.className;
+            //img.className = options.className;
             img.setAttribute('draggable', 'false');
             img.alt = alt;
             modified = true;
