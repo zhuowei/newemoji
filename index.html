@@ -1,0 +1,138 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Arbitrary Unicode pictographs</title>
+<style>
+.pix-cell {
+	width: 32px;
+	height: 32px;
+	border-style: solid;
+	border-color: grey;
+	margin: 0;
+	padding: 0;
+}
+body {
+	font-family: Arial, sans-serif;
+	background-color: #ccddff;
+}
+</style>
+<script src="twemoji.js"></script>
+<script>
+
+var pixels;
+var rows;
+var table;
+
+function buildEdit() {
+	pixels = new Array(4);
+	rows = new Array(4);
+	table = document.createElement("table");
+	table.className = "pix-table";
+	for (var r = 0; r < 4; r++) {
+		pixels[r] = new Array(4);
+		rows[r] = document.createElement("tr");
+		for (var c = 0; c < 4; c++) {
+			pixels[r][c] = document.createElement("td");
+			pixels[r][c].setAttribute("data-pix-on", 0);
+			pixels[r][c].attributes["data-pix-r"] = r;
+			pixels[r][c].attributes["data-pix-c"] = c;
+			pixels[r][c].className = "pix-cell";
+			pixels[r][c].addEventListener("click", clickHandler);
+			rows[r].appendChild(pixels[r][c]);
+		}
+		table.appendChild(rows[r]);
+	}
+}
+
+function toChar() {
+	var a = 0;
+	for (var r = 0; r < 4; r++) {
+		for (var c = 0; c < 4; c++) {
+			a = (a << 1) | parseInt(pixels[r][c].getAttribute("data-pix-on"));
+		}
+	}
+	a |= 0x100000;
+	// decompose
+	var part2 = 0xdc00 | (a & 0x3ff);
+	var part1 = 0xd800 | (a >> 10)&0x3ff;
+	return String.fromCharCode(part1) + String.fromCharCode(part2);
+}
+
+function clickHandler(e) {
+	var newc = parseInt(e.target.getAttribute("data-pix-on"))? 0: 1;
+	e.target.setAttribute("data-pix-on", newc);
+	e.target.style.backgroundColor = newc? "black": "";
+	var text = toChar();
+	document.getElementById("char-preview").textContent = document.getElementById("char-copy").textContent = text;
+	twemoji.parse(document.getElementById("char-preview"));
+}
+
+function loadHandler() {
+	buildEdit();
+	twemoji.parse(document.body);
+	document.getElementById("char-editor").appendChild(table);
+}
+
+function renderChar(charCode) {
+	var SVG = "http://www.w3.org/2000/svg";
+	// create svg element
+	var svg = document.createElementNS(SVG, "svg");
+	svg.setAttribute("width", 16);
+	svg.setAttribute("height", 16);
+	for (var r = 0; r < 4; r++) {
+		for (var c = 0; c < 4; c++) {
+			var bit = (charCode >> (16 - 1 - (r*4) - c)) & 1;
+			if (!bit) continue;
+			var rect = document.createElementNS(SVG, "rect");
+			rect.setAttribute("width", 4);
+			rect.setAttribute("height", 4);
+			rect.setAttribute("x", c*4);
+			rect.setAttribute("y", r*4);
+			rect.style.fill = "black";
+			svg.appendChild(rect);
+		}
+	}
+	return svg;
+}
+function cpme(instr) {
+	return ((instr.charCodeAt(0) & ~0xd800) << 10) | (instr.charCodeAt(1) & ~0xdc00);
+}
+function importme() {
+	var charCode = cpme(document.getElementById("inputthing").value.substring(0, 2));
+	for (var r = 0; r < 4; r++) {
+		for (var c = 0; c < 4; c++) {
+			var bit = (charCode >> (16 - 1 - (r*4) - c)) & 1;
+			pixels[r][c].setAttribute("data-pix-on", bit);
+
+		}
+	}
+	var text = toChar();
+	document.getElementById("char-preview").textContent = document.getElementById("char-copy").textContent = text;
+	twemoji.parse(document.getElementById("char-preview"));
+}
+	
+	
+window.onload = loadHandler;
+</script>
+</head>
+<body>
+<div>
+<h1>Arbitrary Unicode Pictographs - a proposal for encoding custom 4x4 emojis 𐤆</h1>
+<h2>Editor 𔹀</h2>
+Preview: 𙂟</div>
+<div id="char-preview"></div>
+<div>
+Copy:𐿰𘳈</div>
+<div id="char-copy"></div>
+<div>Import: <input id="inputthing"><button onclick="importme()">Import</button></div>
+<div>Click on the squares below to edit.</div>
+<div id="char-editor"></div>
+<h2>How it works𔐄</h2>
+<p>Each 4x4 character is encoded as a codepoint in the 0x100000-0x10ffff range, which in the current Unicode standard is marked as private use.</p>
+<h2>How to decode them on your website𚫪𗈢🪪𚪫</h2>
+<p>View the source of this page. It's using a modified version of Twitter's Twemoji.</p>
+<h2>Future directions𑉈</h2>
+<p>Use combining characters 𐓤 to make multipixel and multilayer images.</p>
+</body>
+</html>
